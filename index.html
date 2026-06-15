@@ -11,9 +11,9 @@
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vw; flex-grow: 1; width: 100%; }
         .patient-grid { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
         button { border: none; border-radius: 2vh; font-size: 2.5vw; font-weight: bold; cursor: pointer; color: white; padding: 1.5vh; transition: 0.2s; }
-        .action-btn { font-size: 5vw; height: 35vh; margin-top: 2vh; width: 100%; }
+        .action-btn { font-size: 5vw; height: 30vh; margin-top: 2vh; width: 100%; }
         #timer-display { font-size: 15vw; text-align: center; font-weight: 900; color: #334155; margin: 5vh 0; }
-        h2 { font-size: 4vw; text-align: center; color: #475569; }
+        h2 { font-size: 4vw; text-align: center; color: #475569; margin-bottom: 2vh; }
     </style>
 </head>
 <body>
@@ -26,93 +26,63 @@
     </div>
 
     <div class="slide" id="s2">
+        <h2>בחר מגדר מטופל/ת</h2>
+        <div class="grid">
+            <button style="background:#3b82f6" onclick="renderPatients('m')">מטופלים (זכר)</button>
+            <button style="background:#ec4899" onclick="renderPatients('f')">מטופלות (נקבה)</button>
+        </div>
+    </div>
+
+    <div class="slide" id="s3">
         <h2 id="p-title">בחר מטופל/ת</h2>
         <div class="grid patient-grid" id="p-list"></div>
     </div>
 
-    <div class="slide" id="s3">
+    <div class="slide" id="s4">
         <button class="action-btn" style="background:#22c55e" onclick="startTimer()">התחל טיפול</button>
     </div>
 
-    <div class="slide" id="s4">
+    <div class="slide" id="s5">
         <div id="timer-display">0:00</div>
         <button class="action-btn" style="background:#ef4444" onclick="finish()">סיום ושליחה</button>
     </div>
 
-    <div class="slide" id="s5">
+    <div class="slide" id="s6">
         <div id="thank-you-msg" style="font-size: 6vw; color: #10b981; font-weight: bold;"></div>
     </div>
 
     <script>
-        // הכנס כאן את ה-URL החדש מה-Deploy שביצעת בגוגל:
         const URL = "https://script.google.com/macros/s/AKfycbycfAX29PaNE3Ia3EGmhTJM3CjveArvasBmJ-Q8CogWQJ-egTyOuPDGqLDfyuEDQhBxKw/exec";
         
         const cList = [{name:"אלכס", color:"#3b82f6"}, {name:"ג'רי", color:"#8b5cf6"}, {name:"ליאור", color:"#ec4899"}, {name:"עמונה", color:"#f59e0b"}, {name:"אמאני", color:"#10b981"}, {name:"האנדי", color:"#64748b"}];
         
-        // חלוקה למגדרים:
-       // מערך המטופלים עם הגדרה של מגדר (m=זכר, f=נקבה)
-const patients = [
-    {name: "רוני אלנתן", g: "m"}, {name: "שאול אטינגר", g: "m"}, {name: "נתנאל אנקרי", g: "m"}, 
-    {name: "דניאל שוורץ", g: "m"}, {name: "איבן ציקנוב", g: "m"}, {name: "אילן אזולאי", g: "m"}, 
-    {name: "ניר אבוטבול", g: "m"}, {name: "רועי מורלי", g: "m"}, {name: "עמית חסאן", g: "m"}, 
-    {name: "ניר בן סימון", g: "m"}, {name: "מיכאל גריבלט", g: "m"}, {name: "דוד גרונברגר", g: "m"}, 
-    {name: "שמעון לוי", g: "m"}, {name: "ליאור רובין", g: "m"}, {name: "מאיר לוי", g: "m"}, 
-    {name: "אחמד אטרש", g: "m"}, {name: "ראובן פילו", g: "m"}, {name: "זוהר כהן", g: "m"}, 
-    {name: "ליר סגל", g: "m"}, {name: "דניאל מזרחי", g: "m"}, {name: "לידור לוי", g: "m"}, 
-    {name: "נתנאל דרמוני", g: "m"}, {name: "אחמד ג'עבר", g: "m"}, {name: "שמעון אורי זעפרני", g: "m"},
-    {name: "אדווה יוזרלביץ", g: "f"}, {name: "תהילה זיגל", g: "f"}, {name: "דניאלה ליפשיץ", g: "f"}, 
-    {name: "הודיה מצליח", g: "f"}, {name: "סופי נחאס", g: "f"}, {name: "גלי מאירי", g: "f"}, 
-    {name: "מיכל לוינה", g: "f"}, {name: "נועה צפתי", g: "f"}, {name: "עדן עוזרי", g: "f"}, 
-    {name: "אולגה סורוקין", g: "f"}, {name: "נחמיאס ליאת", g: "f"}, {name: "נופר מנצורי", g: "f"}, 
-    {name: "פסטמן רחל", g: "f"}, {name: "אלינור בלילתי", g: "f"}, {name: "מרים שמלה", g: "f"}
-];
-
-function renderPatients(gender) {
-    const list = document.getElementById('p-list');
-    list.innerHTML = "";
-    // סינון לפי מגדר שנבחר
-    patients.filter(p => p.g === gender).forEach(p => {
-        const b = document.createElement('button');
-        b.innerText = p.name; 
-        b.style.backgroundColor = "#94a3b8";
-        b.onclick = () => { session.p = p.name; show('s3'); };
-        list.appendChild(b);
-    });
-}
-
-// בתוך הפונקציה שבונה את המטפל:
-// במקום להציג ישר את הרשימה, תציג כפתורי בחירת מגדר:
-function showGenderSelection() {
-    const list = document.getElementById('p-list');
-    list.innerHTML = `
-        <button style="background:#3b82f6" onclick="renderPatients('m')">מטופלים (זכר)</button>
-        <button style="background:#ec4899" onclick="renderPatients('f')">מטופלות (נקבה)</button>
-    `;
-    show('s2');
-}
+        const patients = [
+            {name: "רוני אלנתן", g: "m"}, {name: "שאול אטינגר", g: "m"}, {name: "נתנאל אנקרי", g: "m"}, {name: "דניאל שוורץ", g: "m"}, {name: "איבן ציקנוב", g: "m"}, {name: "אילן אזולאי", g: "m"}, {name: "ניר אבוטבול", g: "m"}, {name: "רועי מורלי", g: "m"}, {name: "עמית חסאן", g: "m"}, {name: "ניר בן סימון", g: "m"}, {name: "מיכאל גריבלט", g: "m"}, {name: "דוד גרונברגר", g: "m"}, {name: "שמעון לוי", g: "m"}, {name: "ליאור רובין", g: "m"}, {name: "מאיר לוי", g: "m"}, {name: "אחמד אטרש", g: "m"}, {name: "ראובן פילו", g: "m"}, {name: "זוהר כהן", g: "m"}, {name: "ליר סגל", g: "m"}, {name: "דניאל מזרחי", g: "m"}, {name: "לידור לוי", g: "m"}, {name: "נתנאל דרמוני", g: "m"}, {name: "אחמד ג'עבר", g: "m"}, {name: "שמעון אורי זעפרני", g: "m"},
+            {name: "אדווה יוזרלביץ", g: "f"}, {name: "תהילה זיגל", g: "f"}, {name: "דניאלה ליפשיץ", g: "f"}, {name: "הודיה מצליח", g: "f"}, {name: "סופי נחאס", g: "f"}, {name: "גלי מאירי", g: "f"}, {name: "מיכל לוינה", g: "f"}, {name: "נועה צפתי", g: "f"}, {name: "עדן עוזרי", g: "f"}, {name: "אולגה סורוקין", g: "f"}, {name: "נחמיאס ליאת", g: "f"}, {name: "נופר מנצורי", g: "f"}, {name: "פסטמן רחל", g: "f"}, {name: "אלינור בלילתי", g: "f"}, {name: "מרים שמלה", g: "f"}
+        ];
         
         let session = { c: "", p: "", start: null };
 
+        // בניית מטפלים
         cList.forEach(c => {
             const b = document.createElement('button');
             b.innerText = c.name; b.style.backgroundColor = c.color;
-            b.onclick = () => { session.c = c.name; renderPatients(); show('s2'); };
+            b.onclick = () => { session.c = c.name; show('s2'); };
             document.getElementById('caregiver-list').appendChild(b);
         });
 
-        function renderPatients() {
-            const list = document.getElementById('p-list');
-            list.innerHTML = "";
-            patients.forEach(p => {
-                const b = document.createElement('button');
-                b.innerText = p.name; b.style.backgroundColor = "#94a3b8";
-                b.onclick = () => { session.p = p.name; show('s3'); };
+        function renderPatients(gender) {
+            const list = document.getElementById('p-list'); list.innerHTML = "";
+            patients.filter(p => p.g === gender).forEach(p => {
+                const b = document.createElement('button'); b.innerText = p.name; b.style.backgroundColor = "#94a3b8";
+                b.onclick = () => { session.p = p.name; show('s4'); };
                 list.appendChild(b);
             });
+            show('s3');
         }
 
         function show(id) { document.querySelectorAll('.slide').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function startTimer() { session.start = new Date(); show('s4'); 
+        function startTimer() { session.start = new Date(); show('s5'); 
             setInterval(() => { const d = new Date() - session.start; document.getElementById('timer-display').innerText = Math.floor(d/60000) + ":" + Math.floor((d%60000)/1000).toString().padStart(2,'0'); }, 1000);
         }
 
@@ -123,7 +93,7 @@ function showGenderSelection() {
             for(let k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = data[k]; form.appendChild(i); }
             document.body.appendChild(form); form.submit();
             document.getElementById('thank-you-msg').innerText = "תודה על השירות הטוב " + session.c + "!";
-            show('s5');
+            show('s6');
             setTimeout(() => { location.reload(); }, 3000);
         }
     </script>
