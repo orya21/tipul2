@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עמדת רישום - מערכת חכמה</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; text-align: center; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        button { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-size: 0.95rem; }
+        .selected { background: #3498db !important; color: white; border-color: #2980b9; }
+        #step2 { display: none; }
+        h2 { color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="step1">
+        <h2>בחר מטפל/ת:</h2>
+        <div class="grid" id="caregivers">
+            <button onclick="setCaregiver('אלכס', 'male', this)">אלכס</button>
+            <button onclick="setCaregiver('ג'רי', 'male', this)">ג'רי</button>
+            <button onclick="setCaregiver('ליאור', 'male', this)">ליאור</button>
+            <button onclick="setCaregiver('עמונה', 'female', this)">עמונה</button>
+            <button onclick="setCaregiver('אמאני', 'female', this)">אמאני</button>
+            <button onclick="setCaregiver('האנדי', 'male', this)">האנדי</button>
+        </div>
+    </div>
+
+    <div id="step2">
+        <h2 id="caregiver-display"></h2>
+        <div class="grid" id="patient-list"></div>
+        <button style="width: 100%; margin-top: 25px; padding: 20px; background: #27ae60; color: white; font-weight: bold; font-size: 1.2rem;" onclick="finish()">סיום טיפול</button>
+    </div>
+</div>
+
+<script>
+    // הקישור שלך (וודא שהוא נכון בתוך המרכאות)
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycfAX29PaNE3Ia3EGmhTJM3CjveArvasBmJ-Q8CogWQJ-egTyOuPDGqLDfyuEDQhBxKw/exec";
+
+    const patients = [
+        { name: "רוני אלנתן", gender: "male" }, { name: "שאול אטינגר", gender: "male" }, 
+        { name: "נתנאל אנקרי", gender: "male" }, { name: "דניאל שוורץ", gender: "male" },
+        { name: "איבן ציקנוב", gender: "male" }, { name: "אדווה יוזרלביץ", gender: "female" },
+        { name: "אילן אזולאי", gender: "male" }, { name: "ניר אבוטבול", gender: "male" },
+        { name: "רועי מורלי", gender: "male" }, { name: "תהילה זיגל", gender: "female" },
+        { name: "דניאלה ליפשיץ", gender: "female" }, { name: "הודיה מצליח", gender: "female" },
+        { name: "עמית חסאן", gender: "male" }, { name: "ניר בן סימון", gender: "male" },
+        { name: "מיכאל גריבלט", gender: "male" }, { name: "דוד גרונברגר", gender: "male" },
+        { name: "שמעון לוי", gender: "male" }, { name: "סופי נחאס", gender: "female" },
+        { name: "גלי מאירי", gender: "female" }, { name: "ליאור רובין", gender: "male" },
+        { name: "מאיר לוי", gender: "male" }, { name: "מיכל לוינה", gender: "female" },
+        { name: "נועה צפתי", gender: "female" }, { name: "אחמד אטרש", gender: "male" },
+        { name: "ראובן פילו", gender: "male" }, { name: "עדן עוזרי", gender: "female" },
+        { name: "זוהר כהן", gender: "male" }, { name: "אולגה סורוקין", gender: "female" },
+        { name: "נחמיאס ליאת", gender: "female" }, { name: "נופר מנצורי", gender: "female" },
+        { name: "פסטמן רחל", gender: "female" }, { name: "אלינור בלילתי", gender: "female" },
+        { name: "ליר סגל", gender: "male" }, { name: "דניאל מזרחי", gender: "male" },
+        { name: "לידור לוי", gender: "male" }, { name: "נתנאל דרמוני", gender: "male" },
+        { name: "אחמד ג'עבר", gender: "male" }, { name: "מרים שמלה", gender: "female" },
+        { name: "שמעון אורי זעפרני", gender: "male" }
+    ];
+
+    let session = { c: "", cGender: "", p: "" };
+
+    function setCaregiver(name, gender, btn) {
+        session.c = name;
+        session.cGender = gender;
+        document.querySelectorAll('#caregivers button').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        
+        const filtered = patients.filter(p => p.gender === gender);
+        const listDiv = document.getElementById('patient-list');
+        listDiv.innerHTML = "";
+        
+        filtered.forEach(p => {
+            const b = document.createElement('button');
+            b.innerText = p.name;
+            b.className = 'patient-btn';
+            b.onclick = function() {
+                session.p = p.name;
+                document.querySelectorAll('.patient-btn').forEach(btn => btn.classList.remove('selected'));
+                b.classList.add('selected');
+            };
+            listDiv.appendChild(b);
+        });
+
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = 'block';
+        document.getElementById('caregiver-display').innerText = "מטפל: " + name;
+    }
+
+    function finish() {
+        if(!session.p) return alert("אנא בחר מטופל!");
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = GOOGLE_SCRIPT_URL;
+        
+        const data = { caregiver: session.c, patient: session.p, time: new Date().toLocaleString() };
+        for (const key in data) {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = key; input.value = data[key];
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+</body>
+</html>
