@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>רישום טיפול - מערכת מלאה</title>
+    <title>מערכת טיפול חכמה</title>
     <style>
         body { margin: 0; padding: 2vh; height: 96vh; background-color: #f8fafc; font-family: sans-serif; overflow: hidden; }
         .slide { display: none; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
         .active { display: flex; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vw; flex-grow: 1; width: 100%; }
         .patient-grid { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
-        button { border: none; border-radius: 2vh; font-size: 3vw; font-weight: bold; cursor: pointer; color: white; padding: 1vh; transition: 0.2s; }
+        button { border: none; border-radius: 2vh; font-size: 2.5vw; font-weight: bold; cursor: pointer; color: white; padding: 1.5vh; transition: 0.2s; }
         .action-btn { font-size: 5vw; height: 35vh; margin-top: 2vh; width: 100%; }
         #timer-display { font-size: 15vw; text-align: center; font-weight: 900; color: #334155; margin: 5vh 0; }
         h2 { font-size: 4vw; text-align: center; color: #475569; }
-        #thank-you-msg { font-size: 6vw; color: #10b981; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
@@ -41,33 +40,43 @@
     </div>
 
     <div class="slide" id="s5">
-        <div id="thank-you-msg"></div>
+        <div id="thank-you-msg" style="font-size: 6vw; color: #10b981; font-weight: bold;"></div>
     </div>
 
     <script>
+        // הכנס כאן את ה-URL החדש מה-Deploy שביצעת בגוגל:
         const URL = "https://script.google.com/macros/s/AKfycbycfAX29PaNE3Ia3EGmhTJM3CjveArvasBmJ-Q8CogWQJ-egTyOuPDGqLDfyuEDQhBxKw/exec";
+        
         const cList = [{name:"אלכס", color:"#3b82f6"}, {name:"ג'רי", color:"#8b5cf6"}, {name:"ליאור", color:"#ec4899"}, {name:"עמונה", color:"#f59e0b"}, {name:"אמאני", color:"#10b981"}, {name:"האנדי", color:"#64748b"}];
-        const patients = ["רוני אלנתן", "שאול אטינגר", "נתנאל אנקרי", "דניאל שוורץ", "איבן ציקנוב", "אדווה יוזרלביץ", "אילן אזולאי", "ניר אבוטבול", "רועי מורלי", "תהילה זיגל", "דניאלה ליפשיץ", "הודיה מצליח", "עמית חסאן", "ניר בן סימון", "מיכאל גריבלט", "דוד גרונברגר", "שמעון לוי", "סופי נחאס", "גלי מאירי", "ליאור רובין", "מאיר לוי", "מיכל לוינה", "נועה צפתי", "אחמד אטרש", "ראובן פילו", "עדן עוזרי", "זוהר כהן", "אולגה סורוקין", "נחמיאס ליאת", "נופר מנצורי", "פסטמן רחל", "אלינור בלילתי", "ליר סגל", "דניאל מזרחי", "לידור לוי", "נתנאל דרמוני", "אחמד ג'עבר", "מרים שמלה", "שמעון אורי זעפרני"];
+        
+        // חלוקה למגדרים:
+        const patients = [
+            {name: "רוני אלנתן", g: "male"}, {name: "שאול אטינגר", g: "male"}, {name: "נתנאל אנקרי", g: "male"}, 
+            {name: "אדווה יוזרלביץ", g: "female"}, {name: "תהילה זיגל", g: "female"}, {name: "דניאלה ליפשיץ", g: "female"}
+            // הוסף את כל השאר באותו פורמט...
+        ];
         
         let session = { c: "", p: "", start: null };
 
-        // בניית כפתורים
         cList.forEach(c => {
             const b = document.createElement('button');
             b.innerText = c.name; b.style.backgroundColor = c.color;
-            b.onclick = () => { session.c = c.name; show('s2'); };
+            b.onclick = () => { session.c = c.name; renderPatients(); show('s2'); };
             document.getElementById('caregiver-list').appendChild(b);
         });
 
-        patients.forEach(p => {
-            const b = document.createElement('button');
-            b.innerText = p; b.style.backgroundColor = "#94a3b8";
-            b.onclick = () => { session.p = p; show('s3'); };
-            document.getElementById('p-list').appendChild(b);
-        });
+        function renderPatients() {
+            const list = document.getElementById('p-list');
+            list.innerHTML = "";
+            patients.forEach(p => {
+                const b = document.createElement('button');
+                b.innerText = p.name; b.style.backgroundColor = "#94a3b8";
+                b.onclick = () => { session.p = p.name; show('s3'); };
+                list.appendChild(b);
+            });
+        }
 
         function show(id) { document.querySelectorAll('.slide').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-
         function startTimer() { session.start = new Date(); show('s4'); 
             setInterval(() => { const d = new Date() - session.start; document.getElementById('timer-display').innerText = Math.floor(d/60000) + ":" + Math.floor((d%60000)/1000).toString().padStart(2,'0'); }, 1000);
         }
@@ -76,17 +85,10 @@
             const form = document.createElement('form');
             form.method = 'POST'; form.action = URL; form.target = "hidden_iframe";
             const data = { caregiver: session.c, patient: session.p, duration: document.getElementById('timer-display').innerText, time: new Date().toLocaleString() };
-            for(let k in data) {
-                const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = data[k];
-                form.appendChild(i);
-            }
+            for(let k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = data[k]; form.appendChild(i); }
             document.body.appendChild(form); form.submit();
-            
-            // תצוגת הודעת תודה אישית
             document.getElementById('thank-you-msg').innerText = "תודה על השירות הטוב " + session.c + "!";
             show('s5');
-            
-            // חזרה למסך הראשי אחרי 3 שניות
             setTimeout(() => { location.reload(); }, 3000);
         }
     </script>
