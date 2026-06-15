@@ -3,36 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>רישום טיפול - עיצוב נעים</title>
+    <title>רישום טיפול - עובד</title>
     <style>
-        :root { --bg: #f0f4f8; --card: #ffffff; --accent: #6366f1; --soft-blue: #e0e7ff; --text: #1e293b; --success: #22c55e; --danger: #ef4444; }
-        body { margin: 0; padding: 20px; height: 100vh; background-color: var(--bg); font-family: 'Segoe UI', sans-serif; color: var(--text); overflow: hidden; }
-        .slide-container { display: none; flex-direction: column; height: 90vh; background: var(--card); padding: 40px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        :root { --bg: #f0f4f8; --card: #ffffff; --accent: #6366f1; --text: #1e293b; --success: #22c55e; --danger: #ef4444; }
+        body { margin: 0; padding: 20px; height: 100vh; background-color: var(--bg); font-family: sans-serif; }
+        .slide-container { display: none; flex-direction: column; height: 85vh; background: var(--card); padding: 30px; border-radius: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .active { display: flex; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; flex-grow: 1; margin-top: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
         .patient-grid { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
-        button { padding: 25px; border: none; border-radius: 20px; background: var(--soft-blue); color: var(--accent); font-size: 26px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        button { padding: 20px; border: none; border-radius: 15px; background: #e0e7ff; color: var(--accent); font-size: 22px; font-weight: bold; cursor: pointer; }
         button:hover { background: var(--accent); color: white; }
-        .patient-btn { font-size: 30px; height: 120px; background: #f1f5f9; }
-        .action-btn { height: 250px; font-size: 70px; color: white; border: none; }
+        .action-btn { height: 200px; font-size: 60px; color: white; margin-top: 20px; }
         .btn-start { background: var(--success); }
         .btn-end { background: var(--danger); }
-        h2 { font-size: 45px; text-align: center; color: var(--accent); }
-        #timer-display { font-size: 50px; text-align: center; margin: 40px 0; font-weight: bold; }
+        h2 { font-size: 35px; color: var(--accent); text-align: center; }
+        #timer-display { font-size: 60px; text-align: center; margin: 20px 0; font-weight: bold; }
     </style>
 </head>
 <body>
 
     <div class="slide-container active" id="s1">
         <h2>בחר מטפל/ת</h2>
-        <div class="grid">
-            <button onclick="setCaregiver('אלכס')">אלכס</button>
-            <button onclick="setCaregiver('ג\'רי')">ג'רי</button>
-            <button onclick="setCaregiver('ליאור')">ליאור</button>
-            <button onclick="setCaregiver('עמונה')">עמונה</button>
-            <button onclick="setCaregiver('אמאני')">אמאני</button>
-            <button onclick="setCaregiver('האנדי')">האנדי</button>
-        </div>
+        <div class="grid" id="caregiver-list"></div>
     </div>
 
     <div class="slide-container" id="s2">
@@ -45,13 +37,40 @@
     </div>
 
     <div class="slide-container" id="s4">
-        <h2>טיפול בעיצומו...</h2>
+        <h2>טיפול פעיל</h2>
         <div id="timer-display">00:00</div>
         <button class="action-btn btn-end" onclick="finish()">סיום ושליחה</button>
     </div>
 
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbycfAX29PaNE3Ia3EGmhTJM3CjveArvasBmJ-Q8CogWQJ-egTyOuPDGqLDfyuEDQhBxKw/exec";
+        const caregivers = ["אלכס", "ג'רי", "ליאור", "עמונה", "אמאני", "האנדי"];
         const patients = ["רוני אלנתן", "שאול אטינגר", "נתנאל אנקרי", "דניאל שוורץ", "איבן ציקנוב", "אדווה יוזרלביץ", "אילן אזולאי", "ניר אבוטבול", "רועי מורלי", "תהילה זיגל", "דניאלה ליפשיץ", "הודיה מצליח", "עמית חסאן", "ניר בן סימון", "מיכאל גריבלט", "דוד גרונברגר", "שמעון לוי", "סופי נחאס", "גלי מאירי", "ליאור רובין", "מאיר לוי", "מיכל לוינה", "נועה צפתי", "אחמד אטרש", "ראובן פילו", "עדן עוזרי", "זוהר כהן", "אולגה סורוקין", "נחמיאס ליאת", "נופר מנצורי", "פסטמן רחל", "אלינור בלילתי", "ליר סגל", "דניאל מזרחי", "לידור לוי", "נתנאל דרמוני", "אחמד ג'עבר", "מרים שמלה", "שמעון אורי זעפרני"];
+        
         let session = { c: "", p: "", start: null };
         let timerInterval;
+
+        // בניית רשימת המטפלים באופן דינמי
+        const cList = document.getElementById('caregiver-list');
+        caregivers.forEach(name => {
+            const btn = document.createElement('button');
+            btn.innerText = name;
+            btn.onclick = () => { session.c = name; show('s2'); };
+            cList.appendChild(btn);
+        });
+
+        // בניית רשימת המטופלים
+        const pList = document.getElementById('p-list');
+        patients.forEach(name => {
+            const btn = document.createElement('button');
+            btn.innerText = name;
+            btn.onclick = () => { session.p = name; show('s3'); };
+            pList.appendChild(btn);
+        });
+
+        function show(id) { document.querySelectorAll('.slide-container').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+        function startTimer() { session.start = new Date(); show('s4'); timerInterval = setInterval(() => { const diff = new Date() - session.start; const m = Math.floor(diff/60000); const s = Math.floor((diff%60000)/1000); document.getElementById('timer-display').innerText = `${m}:${s.toString().padStart(2,'0')}`; }, 1000); }
+        function finish() { clearInterval(timerInterval); const form = document.createElement('form'); form.method = 'POST'; form.action = URL; const data = { caregiver: session.c, patient: session.p, duration: document.getElementById('timer-display').innerText, time: new Date().toLocaleString() }; for(let k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = data[k]; form.appendChild(i); } document.body.appendChild(form); form.submit(); }
+    </script>
+</body>
+</html>
