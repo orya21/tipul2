@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>רישום טיפול חכם</title>
+    <title>רישום טיפול - מערכת מלאה</title>
     <style>
-        :root { --bg: #f8fafc; }
-        body { margin: 0; padding: 5vh; height: 90vh; background-color: var(--bg); font-family: sans-serif; overflow: hidden; }
+        body { margin: 0; padding: 2vh; height: 96vh; background-color: #f8fafc; font-family: sans-serif; overflow: hidden; }
         .slide { display: none; height: 100%; flex-direction: column; }
         .active { display: flex; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2vw; flex-grow: 1; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vw; flex-grow: 1; }
         .patient-grid { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
-        button { border: none; border-radius: 3vh; font-size: 3vw; font-weight: bold; cursor: pointer; transition: 0.3s; color: white; padding: 2vh; }
-        .action-btn { font-size: 5vw; height: 40vh; margin-top: 5vh; }
-        #timer-display { font-size: 15vw; text-align: center; font-weight: 900; margin: 10vh 0; color: #334155; }
-        h2 { font-size: 4vw; text-align: center; margin-bottom: 2vh; }
+        button { border: none; border-radius: 2vh; font-size: 3vw; font-weight: bold; cursor: pointer; color: white; padding: 1vh; transition: 0.2s; }
+        .action-btn { font-size: 5vw; height: 35vh; margin-top: 2vh; width: 100%; }
+        #timer-display { font-size: 15vw; text-align: center; font-weight: 900; color: #334155; margin: 5vh 0; }
+        h2 { font-size: 4vw; text-align: center; color: #475569; }
     </style>
 </head>
 <body>
+
+    <iframe name="hidden_iframe" style="display:none;"></iframe>
 
     <div class="slide active" id="s1">
         <h2>בחר מטפל/ת</h2>
@@ -40,16 +41,11 @@
 
     <script>
         const URL = "https://script.google.com/macros/s/AKfycbycfAX29PaNE3Ia3EGmhTJM3CjveArvasBmJ-Q8CogWQJ-egTyOuPDGqLDfyuEDQhBxKw/exec";
-        const cList = [
-            {name:"אלכס", color:"#3b82f6"}, {name:"ג'רי", color:"#8b5cf6"}, 
-            {name:"ליאור", color:"#ec4899"}, {name:"עמונה", color:"#f59e0b"}, 
-            {name:"אמאני", color:"#10b981"}, {name:"האנדי", color:"#64748b"}
-        ];
+        const cList = [{name:"אלכס", color:"#3b82f6"}, {name:"ג'רי", color:"#8b5cf6"}, {name:"ליאור", color:"#ec4899"}, {name:"עמונה", color:"#f59e0b"}, {name:"אמאני", color:"#10b981"}, {name:"האנדי", color:"#64748b"}];
         const patients = ["רוני אלנתן", "שאול אטינגר", "נתנאל אנקרי", "דניאל שוורץ", "איבן ציקנוב", "אדווה יוזרלביץ", "אילן אזולאי", "ניר אבוטבול", "רועי מורלי", "תהילה זיגל", "דניאלה ליפשיץ", "הודיה מצליח", "עמית חסאן", "ניר בן סימון", "מיכאל גריבלט", "דוד גרונברגר", "שמעון לוי", "סופי נחאס", "גלי מאירי", "ליאור רובין", "מאיר לוי", "מיכל לוינה", "נועה צפתי", "אחמד אטרש", "ראובן פילו", "עדן עוזרי", "זוהר כהן", "אולגה סורוקין", "נחמיאס ליאת", "נופר מנצורי", "פסטמן רחל", "אלינור בלילתי", "ליר סגל", "דניאל מזרחי", "לידור לוי", "נתנאל דרמוני", "אחמד ג'עבר", "מרים שמלה", "שמעון אורי זעפרני"];
         
         let session = { c: "", p: "", start: null };
 
-        // בניית מטפלים
         cList.forEach(c => {
             const b = document.createElement('button');
             b.innerText = c.name; b.style.backgroundColor = c.color;
@@ -57,7 +53,6 @@
             document.getElementById('caregiver-list').appendChild(b);
         });
 
-        // בניית מטופלים
         patients.forEach(p => {
             const b = document.createElement('button');
             b.innerText = p; b.style.backgroundColor = "#94a3b8";
@@ -71,13 +66,17 @@
 
         function finish() {
             const form = document.createElement('form');
-            form.method = 'POST'; form.action = URL;
+            form.method = 'POST'; form.action = URL; form.target = "hidden_iframe";
             const data = { caregiver: session.c, patient: session.p, duration: document.getElementById('timer-display').innerText, time: new Date().toLocaleString() };
             for(let k in data) {
                 const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = data[k];
                 form.appendChild(i);
             }
             document.body.appendChild(form); form.submit();
+            
+            // הודעת פרידה אישית
+            alert("תודה על השירות הטוב " + session.c + "!");
+            location.reload(); 
         }
     </script>
 </body>
