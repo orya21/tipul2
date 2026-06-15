@@ -50,11 +50,46 @@
         const cList = [{name:"אלכס", color:"#3b82f6"}, {name:"ג'רי", color:"#8b5cf6"}, {name:"ליאור", color:"#ec4899"}, {name:"עמונה", color:"#f59e0b"}, {name:"אמאני", color:"#10b981"}, {name:"האנדי", color:"#64748b"}];
         
         // חלוקה למגדרים:
-        const patients = [
-            {name: "רוני אלנתן", g: "male"}, {name: "שאול אטינגר", g: "male"}, {name: "נתנאל אנקרי", g: "male"}, 
-            {name: "אדווה יוזרלביץ", g: "female"}, {name: "תהילה זיגל", g: "female"}, {name: "דניאלה ליפשיץ", g: "female"}
-            // הוסף את כל השאר באותו פורמט...
-        ];
+       // מערך המטופלים עם הגדרה של מגדר (m=זכר, f=נקבה)
+const patients = [
+    {name: "רוני אלנתן", g: "m"}, {name: "שאול אטינגר", g: "m"}, {name: "נתנאל אנקרי", g: "m"}, 
+    {name: "דניאל שוורץ", g: "m"}, {name: "איבן ציקנוב", g: "m"}, {name: "אילן אזולאי", g: "m"}, 
+    {name: "ניר אבוטבול", g: "m"}, {name: "רועי מורלי", g: "m"}, {name: "עמית חסאן", g: "m"}, 
+    {name: "ניר בן סימון", g: "m"}, {name: "מיכאל גריבלט", g: "m"}, {name: "דוד גרונברגר", g: "m"}, 
+    {name: "שמעון לוי", g: "m"}, {name: "ליאור רובין", g: "m"}, {name: "מאיר לוי", g: "m"}, 
+    {name: "אחמד אטרש", g: "m"}, {name: "ראובן פילו", g: "m"}, {name: "זוהר כהן", g: "m"}, 
+    {name: "ליר סגל", g: "m"}, {name: "דניאל מזרחי", g: "m"}, {name: "לידור לוי", g: "m"}, 
+    {name: "נתנאל דרמוני", g: "m"}, {name: "אחמד ג'עבר", g: "m"}, {name: "שמעון אורי זעפרני", g: "m"},
+    {name: "אדווה יוזרלביץ", g: "f"}, {name: "תהילה זיגל", g: "f"}, {name: "דניאלה ליפשיץ", g: "f"}, 
+    {name: "הודיה מצליח", g: "f"}, {name: "סופי נחאס", g: "f"}, {name: "גלי מאירי", g: "f"}, 
+    {name: "מיכל לוינה", g: "f"}, {name: "נועה צפתי", g: "f"}, {name: "עדן עוזרי", g: "f"}, 
+    {name: "אולגה סורוקין", g: "f"}, {name: "נחמיאס ליאת", g: "f"}, {name: "נופר מנצורי", g: "f"}, 
+    {name: "פסטמן רחל", g: "f"}, {name: "אלינור בלילתי", g: "f"}, {name: "מרים שמלה", g: "f"}
+];
+
+function renderPatients(gender) {
+    const list = document.getElementById('p-list');
+    list.innerHTML = "";
+    // סינון לפי מגדר שנבחר
+    patients.filter(p => p.g === gender).forEach(p => {
+        const b = document.createElement('button');
+        b.innerText = p.name; 
+        b.style.backgroundColor = "#94a3b8";
+        b.onclick = () => { session.p = p.name; show('s3'); };
+        list.appendChild(b);
+    });
+}
+
+// בתוך הפונקציה שבונה את המטפל:
+// במקום להציג ישר את הרשימה, תציג כפתורי בחירת מגדר:
+function showGenderSelection() {
+    const list = document.getElementById('p-list');
+    list.innerHTML = `
+        <button style="background:#3b82f6" onclick="renderPatients('m')">מטופלים (זכר)</button>
+        <button style="background:#ec4899" onclick="renderPatients('f')">מטופלות (נקבה)</button>
+    `;
+    show('s2');
+}
         
         let session = { c: "", p: "", start: null };
 
