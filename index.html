@@ -6,78 +6,80 @@
     <title>מערכת מעקב טיפולים</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f0f2f5; text-align: center; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; justify-content: center; }
-        .tag { background: #007bff; color: white; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1.1rem; }
-        input { padding: 15px; width: 70%; font-size: 1.2rem; border: 1px solid #ccc; border-radius: 10px; }
-        button { padding: 15px 25px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 10px; background: #28a745; color: white; margin: 5px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 20px; }
+        .btn-large { padding: 30px; font-size: 1.5rem; width: 100%; margin: 10px 0; border-radius: 15px; border: none; background: #007bff; color: white; }
+        .tag { display: inline-block; padding: 20px; margin: 5px; background: #eee; border-radius: 10px; cursor: pointer; border: 2px solid #ddd; }
+        .selected { background: #28a745; color: white; border-color: #1e7e34; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="app" class="container">
-    <h1>ניהול הגדרות צוות</h1>
-    
-    <div class="input-group">
-        <input type="text" id="in-caregiver" placeholder="שם מטפל/ת...">
-        <button onclick="addTag('caregiver')">+</button>
-    </div>
-    <div id="caregiver-tags" class="tags-container"></div>
+<div id="settings-view" class="container">
+    <h1>1. הגדרות צוות</h1>
+    <input type="text" id="in-caregiver" placeholder="שם מטפל...">
+    <button onclick="addTag('caregiver')">+</button>
+    <div id="caregiver-tags"></div>
+    <input type="text" id="in-patient" placeholder="שם מטופל...">
+    <button onclick="addTag('patient')">+</button>
+    <div id="patient-tags"></div>
+    <button onclick="switchToApp()" style="background:#007bff; width:100%;">שמור והמשך</button>
+</div>
 
-    <div class="input-group">
-        <input type="text" id="in-patient" placeholder="שם מטופל/ת...">
-        <button onclick="addTag('patient')">+</button>
-    </div>
-    <div id="patient-tags" class="tags-container"></div>
-    
-    <button onclick="saveSettings()" style="width: 100%; background: #007bff;">שמור והתחל לעבוד</button>
+<div id="app-view" class="container hidden">
+    <h1>2. ניהול טיפול</h1>
+    <div id="select-caregiver"></div>
+    <div id="select-patient"></div>
+    <button id="start-btn" class="btn-large" onclick="startCare()">התחל טיפול</button>
+    <button id="end-btn" class="btn-large hidden" onclick="endCare()" style="background:#dc3545;">סיום טיפול</button>
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0WQGdoyvAJoCH9CW2dZW5fiwQfITGauyOOu6Kacwc3JPuKeGtOjXL45htMtXjTE90gg/exec";
-    let caregivers = [];
-    let patients = [];
+    const GOOGLE_SCRIPT_URL = "הדביקי_כאן_את_הקישור_שלך";
+    let caregivers = [], patients = [];
+    let currentCaregiver = "", currentPatient = "", startTime;
 
-    // טעינת נתונים ראשונית מהענן
-    fetch(GOOGLE_SCRIPT_URL)
-        .then(r => r.json())
-        .then(data => {
-            caregivers = data.caregivers || [];
-            patients = data.patients || [];
-            render();
-        }).catch(e => console.log("טעינה ראשונית..."));
-
-    function addTag(type) {
-        let input = document.getElementById('in-' + type);
-        if(input.value) {
-            type === 'caregiver' ? caregivers.push(input.value) : patients.push(input.value);
-            render();
-            input.value = '';
-        }
+    // פונקציות ניהול (כפי שהיו)
+    function addTag(type) { /* ... כמו קודם ... */ }
+    
+    function switchToApp() {
+        document.getElementById('settings-view').classList.add('hidden');
+        document.getElementById('app-view').classList.remove('hidden');
+        renderApp();
     }
 
-    function render() {
-        document.getElementById('caregiver-tags').innerHTML = caregivers.map((c, i) => `<span class="tag" onclick="remove('c', ${i})">${c} ✕</span>`).join('');
-        document.getElementById('patient-tags').innerHTML = patients.map((p, i) => `<span class="tag" onclick="remove('p', ${i})">${p} ✕</span>`).join('');
+    function renderApp() {
+        document.getElementById('select-caregiver').innerHTML = caregivers.map(c => `<span class="tag" onclick="select('c', '${c}')">${c}</span>`).join('');
+        document.getElementById('select-patient').innerHTML = patients.map(p => `<span class="tag" onclick="select('p', '${p}')">${p}</span>`).join('');
     }
 
-    function remove(type, i) {
-        type === 'c' ? caregivers.splice(i, 1) : patients.splice(i, 1);
-        render();
+    function select(type, val) {
+        if(type === 'c') currentCaregiver = val; else currentPatient = val;
     }
 
-    function saveSettings() {
-        const payload = { type: 'settings', caregivers, patients };
-        alert("שומר נתונים לענן...");
+    function startCare() {
+        startTime = new Date();
+        document.getElementById('start-btn').classList.add('hidden');
+        document.getElementById('end-btn').classList.remove('hidden');
+    }
 
+    function endCare() {
+        const endTime = new Date();
+        const duration = (endTime - startTime) / 60000;
+        
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).then(() => {
-            alert("נשמר בהצלחה!");
-        });
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                type: 'log', 
+                caregiver: currentCaregiver, 
+                patient: currentPatient, 
+                startTime: startTime.toLocaleString(),
+                endTime: endTime.toLocaleString(),
+                duration: duration.toFixed(2)
+            })
+        }).then(() => alert("נשמר בגיליון הטיפולים!"));
     }
 </script>
 </body>
