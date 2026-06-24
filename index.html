@@ -2,100 +2,76 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מערכת טיפול חכמה</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>מערכת מעקב טיפולים</title>
     <style>
-        body { margin: 0; padding: 2vh; height: 96vh; background-color: #f8fafc; font-family: sans-serif; overflow: hidden; }
-        .slide { display: none; height: 100%; flex-direction: column; align-items: center; justify-content: center; }
-        .active { display: flex; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vw; flex-grow: 1; width: 100%; }
-        .patient-grid { grid-template-columns: repeat(2, 1fr); overflow-y: auto; }
-        button { border: none; border-radius: 2vh; font-size: 2.5vw; font-weight: bold; cursor: pointer; color: white; padding: 1.5vh; transition: 0.2s; }
-        .action-btn { font-size: 5vw; height: 30vh; margin-top: 2vh; width: 100%; }
-        #timer-display { font-size: 15vw; text-align: center; font-weight: 900; color: #334155; margin: 5vh 0; }
-        h2 { font-size: 4vw; text-align: center; color: #475569; margin-bottom: 2vh; }
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; text-align: center; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; justify-content: center; }
+        .tag { background: #007bff; color: white; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1.1rem; }
+        input { padding: 15px; width: 70%; font-size: 1.2rem; border: 1px solid #ccc; border-radius: 10px; }
+        button { padding: 15px 25px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 10px; background: #28a745; color: white; margin: 5px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <iframe name="hidden_iframe" style="display:none;"></iframe>
-
-    <div class="slide active" id="s1">
-        <h2>בחר מטפל/ת</h2>
-        <div class="grid" id="caregiver-list"></div>
+<div id="app" class="container">
+    <h1>ניהול הגדרות צוות</h1>
+    
+    <div class="input-group">
+        <input type="text" id="in-caregiver" placeholder="שם מטפל/ת...">
+        <button onclick="addTag('caregiver')">+</button>
     </div>
+    <div id="caregiver-tags" class="tags-container"></div>
 
-    <div class="slide" id="s2">
-        <h2>בחר מגדר מטופל/ת</h2>
-        <div class="grid">
-            <button style="background:#3b82f6" onclick="renderPatients('m')">מטופלים (זכר)</button>
-            <button style="background:#ec4899" onclick="renderPatients('f')">מטופלות (נקבה)</button>
-        </div>
+    <div class="input-group">
+        <input type="text" id="in-patient" placeholder="שם מטופל/ת...">
+        <button onclick="addTag('patient')">+</button>
     </div>
+    <div id="patient-tags" class="tags-container"></div>
+    
+    <button onclick="saveSettings()" style="width: 100%; background: #007bff;">שמור והתחל לעבוד</button>
+</div>
 
-    <div class="slide" id="s3">
-        <h2 id="p-title">בחר מטופל/ת</h2>
-        <div class="grid patient-grid" id="p-list"></div>
-    </div>
+<script>
+    const GOOGLE_SCRIPT_URL = "הדביקי כאן את ה-URL של ה-Web App שלך";
+    let caregivers = [];
+    let patients = [];
 
-    <div class="slide" id="s4">
-        <button class="action-btn" style="background:#22c55e" onclick="startTimer()">התחל טיפול</button>
-    </div>
+    // טעינת נתונים מהענן בהתחלה
+    fetch(GOOGLE_SCRIPT_URL).then(r => r.json()).then(data => {
+        caregivers = data.caregivers;
+        patients = data.patients;
+        render();
+    });
 
-    <div class="slide" id="s5">
-        <div id="timer-display">0:00</div>
-        <button class="action-btn" style="background:#ef4444" onclick="finish()">סיום ושליחה</button>
-    </div>
-
-    <div class="slide" id="s6">
-        <div id="thank-you-msg" style="font-size: 6vw; color: #10b981; font-weight: bold;"></div>
-    </div>
-
-    <script>
-        const URL = "https://script.google.com/macros/s/AKfycbycfAX29PaNE3Ia3EGmhTJM3CjveArvasBmJ-Q8CogWQJ-egTyOuPDGqLDfyuEDQhBxKw/exec";
-        
-        const cList = [{name:"אלכס", color:"#3b82f6"}, {name:"ג'רי", color:"#8b5cf6"}, {name:"ליאור", color:"#ec4899"}, {name:"עמונה", color:"#f59e0b"}, {name:"אמאני", color:"#10b981"}, {name:"האנדי", color:"#64748b"}];
-        
-        const patients = [
-            {name: "רוני אלנתן", g: "m"}, {name: "שאול אטינגר", g: "m"}, {name: "נתנאל אנקרי", g: "m"}, {name: "דניאל שוורץ", g: "m"}, {name: "איבן ציקנוב", g: "m"}, {name: "אילן אזולאי", g: "m"}, {name: "ניר אבוטבול", g: "m"}, {name: "רועי מורלי", g: "m"}, {name: "עמית חסאן", g: "m"}, {name: "ניר בן סימון", g: "m"}, {name: "מיכאל גריבלט", g: "m"}, {name: "דוד גרונברגר", g: "m"}, {name: "שמעון לוי", g: "m"}, {name: "ליאור רובין", g: "m"}, {name: "מאיר לוי", g: "m"}, {name: "אחמד אטרש", g: "m"}, {name: "ראובן פילו", g: "m"}, {name: "זוהר כהן", g: "m"}, {name: "ליר סגל", g: "m"}, {name: "דניאל מזרחי", g: "m"}, {name: "לידור לוי", g: "m"}, {name: "נתנאל דרמוני", g: "m"}, {name: "אחמד ג'עבר", g: "m"}, {name: "שמעון אורי זעפרני", g: "m"},
-            {name: "אדווה יוזרלביץ", g: "f"}, {name: "תהילה זיגל", g: "f"}, {name: "דניאלה ליפשיץ", g: "f"}, {name: "הודיה מצליח", g: "f"}, {name: "סופי נחאס", g: "f"}, {name: "גלי מאירי", g: "f"}, {name: "מיכל לוינה", g: "f"}, {name: "נועה צפתי", g: "f"}, {name: "עדן עוזרי", g: "f"}, {name: "אולגה סורוקין", g: "f"}, {name: "נחמיאס ליאת", g: "f"}, {name: "נופר מנצורי", g: "f"}, {name: "פסטמן רחל", g: "f"}, {name: "אלינור בלילתי", g: "f"}, {name: "מרים שמלה", g: "f"}
-        ];
-        
-        let session = { c: "", p: "", start: null };
-
-        // בניית מטפלים
-        cList.forEach(c => {
-            const b = document.createElement('button');
-            b.innerText = c.name; b.style.backgroundColor = c.color;
-            b.onclick = () => { session.c = c.name; show('s2'); };
-            document.getElementById('caregiver-list').appendChild(b);
-        });
-
-        function renderPatients(gender) {
-            const list = document.getElementById('p-list'); list.innerHTML = "";
-            patients.filter(p => p.g === gender).forEach(p => {
-                const b = document.createElement('button'); b.innerText = p.name; b.style.backgroundColor = "#94a3b8";
-                b.onclick = () => { session.p = p.name; show('s4'); };
-                list.appendChild(b);
-            });
-            show('s3');
+    function addTag(type) {
+        let input = document.getElementById('in-' + type);
+        if(input.value) {
+            type === 'caregiver' ? caregivers.push(input.value) : patients.push(input.value);
+            render();
+            input.value = '';
         }
+    }
 
-        function show(id) { document.querySelectorAll('.slide').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function startTimer() { session.start = new Date(); show('s5'); 
-            setInterval(() => { const d = new Date() - session.start; document.getElementById('timer-display').innerText = Math.floor(d/60000) + ":" + Math.floor((d%60000)/1000).toString().padStart(2,'0'); }, 1000);
-        }
+    function render() {
+        document.getElementById('caregiver-tags').innerHTML = caregivers.map((c, i) => `<span class="tag" onclick="remove('c', ${i})">${c} ✕</span>`).join('');
+        document.getElementById('patient-tags').innerHTML = patients.map((p, i) => `<span class="tag" onclick="remove('p', ${i})">${p} ✕</span>`).join('');
+    }
 
-        function finish() {
-            const form = document.createElement('form');
-            form.method = 'POST'; form.action = URL; form.target = "hidden_iframe";
-            const data = { caregiver: session.c, patient: session.p, duration: document.getElementById('timer-display').innerText, time: new Date().toLocaleString() };
-            for(let k in data) { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = data[k]; form.appendChild(i); }
-            document.body.appendChild(form); form.submit();
-            document.getElementById('thank-you-msg').innerText = "תודה על השירות הטוב " + session.c + "!";
-            show('s6');
-            setTimeout(() => { location.reload(); }, 3000);
-        }
-    </script>
+    function remove(type, i) {
+        type === 'c' ? caregivers.splice(i, 1) : patients.splice(i, 1);
+        render();
+    }
+
+    function saveSettings() {
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify({ type: 'settings', caregivers, patients })
+        }).then(() => alert("נשמר בענן!"));
+    }
+</script>
 </body>
 </html>
