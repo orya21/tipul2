@@ -2,84 +2,72 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>מערכת מעקב טיפולים</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Treatment Tracker</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; text-align: center; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 20px; }
-        .btn-large { padding: 30px; font-size: 1.5rem; width: 100%; margin: 10px 0; border-radius: 15px; border: none; background: #007bff; color: white; }
-        .tag { display: inline-block; padding: 20px; margin: 5px; background: #eee; border-radius: 10px; cursor: pointer; border: 2px solid #ddd; }
-        .selected { background: #28a745; color: white; border-color: #1e7e34; }
-        .hidden { display: none; }
+        body { font-family: sans-serif; padding: 20px; text-align: center; }
+        .tags-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
+        .tag { background: #007bff; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
+        input { padding: 10px; width: 200px; }
+        button { padding: 10px 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="settings-view" class="container">
-    <h1>1. הגדרות צוות</h1>
-    <input type="text" id="in-caregiver" placeholder="שם מטפל...">
-    <button onclick="addTag('caregiver')">+</button>
-    <div id="caregiver-tags"></div>
-    <input type="text" id="in-patient" placeholder="שם מטופל...">
-    <button onclick="addTag('patient')">+</button>
-    <div id="patient-tags"></div>
-    <button onclick="switchToApp()" style="background:#007bff; width:100%;">שמור והמשך</button>
-</div>
+<div id="main-app">
+    <h1>מעקב טיפולים</h1>
+    
+    <div>
+        <input type="text" id="in-caregiver" placeholder="שם מטפל...">
+        <button onclick="addTag('caregiver')">הוסף מטפל</button>
+        <div id="caregiver-tags" class="tags-container"></div>
+    </div>
 
-<div id="app-view" class="container hidden">
-    <h1>2. ניהול טיפול</h1>
-    <div id="select-caregiver"></div>
-    <div id="select-patient"></div>
-    <button id="start-btn" class="btn-large" onclick="startCare()">התחל טיפול</button>
-    <button id="end-btn" class="btn-large hidden" onclick="endCare()" style="background:#dc3545;">סיום טיפול</button>
+    <div>
+        <input type="text" id="in-patient" placeholder="שם מטופל...">
+        <button onclick="addTag('patient')">הוסף מטופל</button>
+        <div id="patient-tags" class="tags-container"></div>
+    </div>
+
+    <button onclick="saveToCloud()" style="margin-top:20px; background:green; color:white;">שמור הגדרות לענן</button>
 </div>
 
 <script>
-    const GOOGLE_SCRIPT_URL = "הדביקי_כאן_את_הקישור_שלך";
-    let caregivers = [], patients = [];
-    let currentCaregiver = "", currentPatient = "", startTime;
-
-    // פונקציות ניהול (כפי שהיו)
-    function addTag(type) { /* ... כמו קודם ... */ }
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0WQGdoyvAJoCH9CW2dZW5fiwQfITGauyOOu6Kacwc3JPuKeGtOjXL45htMtXjTE90gg/exec";
     
-    function switchToApp() {
-        document.getElementById('settings-view').classList.add('hidden');
-        document.getElementById('app-view').classList.remove('hidden');
-        renderApp();
+    // רשימות המטפלים והמטופלים
+    let caregivers = [];
+    let patients = [];
+
+    // פונקציה להוספת בלון
+    function addTag(type) {
+        let input = document.getElementById('in-' + type);
+        if(input.value) {
+            type === 'caregiver' ? caregivers.push(input.value) : patients.push(input.value);
+            render();
+            input.value = '';
+        }
     }
 
-    function renderApp() {
-        document.getElementById('select-caregiver').innerHTML = caregivers.map(c => `<span class="tag" onclick="select('c', '${c}')">${c}</span>`).join('');
-        document.getElementById('select-patient').innerHTML = patients.map(p => `<span class="tag" onclick="select('p', '${p}')">${p}</span>`).join('');
+    // ציור הבלונים על המסך
+    function render() {
+        document.getElementById('caregiver-tags').innerHTML = caregivers.map((c, i) => `<span class="tag" onclick="remove('c', ${i})">${c} ✕</span>`).join('');
+        document.getElementById('patient-tags').innerHTML = patients.map((p, i) => `<span class="tag" onclick="remove('p', ${i})">${p} ✕</span>`).join('');
     }
 
-    function select(type, val) {
-        if(type === 'c') currentCaregiver = val; else currentPatient = val;
+    function remove(type, i) {
+        type === 'c' ? caregivers.splice(i, 1) : patients.splice(i, 1);
+        render();
     }
 
-    function startCare() {
-        startTime = new Date();
-        document.getElementById('start-btn').classList.add('hidden');
-        document.getElementById('end-btn').classList.remove('hidden');
-    }
-
-    function endCare() {
-        const endTime = new Date();
-        const duration = (endTime - startTime) / 60000;
-        
+    // שמירה לענן (השדרוג)
+    function saveToCloud() {
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                type: 'log', 
-                caregiver: currentCaregiver, 
-                patient: currentPatient, 
-                startTime: startTime.toLocaleString(),
-                endTime: endTime.toLocaleString(),
-                duration: duration.toFixed(2)
-            })
-        }).then(() => alert("נשמר בגיליון הטיפולים!"));
+            body: JSON.stringify({ type: 'settings', caregivers, patients })
+        }).then(() => alert("השמות נשמרו בענן!"));
     }
 </script>
 </body>
