@@ -11,7 +11,6 @@
         .tag { background: #007bff; color: white; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1.1rem; }
         input { padding: 15px; width: 70%; font-size: 1.2rem; border: 1px solid #ccc; border-radius: 10px; }
         button { padding: 15px 25px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 10px; background: #28a745; color: white; margin: 5px; }
-        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -36,42 +35,17 @@
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0WQGdoyvAJoCH9CW2dZW5fiwQfITGauyOOu6Kacwc3JPuKeGtOjXL45htMtXjTE90gg/exec";
- 
-    // 2. פונקציית שמירה שבאמת שולחת נתונים לדרייב
-    function saveSettings() {
-        const payload = {
-            type: 'settings',
-            caregivers: caregivers,
-            patients: patients
-        };
-
-        // הצגת אינדיקציה למשתמש
-        alert("שומר נתונים לענן, אנא המתן...");
-
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-        .then(() => {
-            alert("הנתונים נשמרו בדרייב בהצלחה!");
-        })
-        .catch(err => {
-            console.error(err);
-            alert("שגיאה בשמירה. ודאי שה-URL נכון.");
-        });
-    }
-</script>
     let caregivers = [];
     let patients = [];
 
-    // טעינת נתונים מהענן בהתחלה
-    fetch(GOOGLE_SCRIPT_URL).then(r => r.json()).then(data => {
-        caregivers = data.caregivers;
-        patients = data.patients;
-        render();
-    });
+    // טעינת נתונים ראשונית מהענן
+    fetch(GOOGLE_SCRIPT_URL)
+        .then(r => r.json())
+        .then(data => {
+            caregivers = data.caregivers || [];
+            patients = data.patients || [];
+            render();
+        }).catch(e => console.log("טעינה ראשונית..."));
 
     function addTag(type) {
         let input = document.getElementById('in-' + type);
@@ -93,11 +67,17 @@
     }
 
     function saveSettings() {
+        const payload = { type: 'settings', caregivers, patients };
+        alert("שומר נתונים לענן...");
+
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            body: JSON.stringify({ type: 'settings', caregivers, patients })
-        }).then(() => alert("נשמר בענן!"));
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            alert("נשמר בהצלחה!");
+        });
     }
 </script>
 </body>
