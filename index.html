@@ -3,71 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Treatment Tracker</title>
+    <title>מעקב טיפולים</title>
     <style>
         body { font-family: sans-serif; padding: 20px; text-align: center; }
+        .container { max-width: 600px; margin: auto; }
         .tags-container { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
         .tag { background: #007bff; color: white; padding: 10px 20px; border-radius: 20px; cursor: pointer; }
         input { padding: 10px; width: 200px; }
         button { padding: 10px 20px; cursor: pointer; }
+        .hidden { display: none; }
+        .main-btn { margin-top: 20px; background: green; color: white; padding: 15px 30px; font-size: 1.2rem; }
     </style>
 </head>
 <body>
 
-<div id="main-app">
-    <h1>מעקב טיפולים</h1>
-    
+<div id="settings-screen" class="container">
+    <h1>מעקב טיפולים - הגדרות</h1>
     <div>
         <input type="text" id="in-caregiver" placeholder="שם מטפל...">
         <button onclick="addTag('caregiver')">הוסף מטפל</button>
         <div id="caregiver-tags" class="tags-container"></div>
     </div>
-
     <div>
         <input type="text" id="in-patient" placeholder="שם מטופל...">
         <button onclick="addTag('patient')">הוסף מטופל</button>
         <div id="patient-tags" class="tags-container"></div>
     </div>
+    <button class="main-btn" onclick="saveAndStart()">שמור והתחל לעבוד</button>
+</div>
 
-    <button onclick="saveToCloud()" style="margin-top:20px; background:green; color:white;">שמור הגדרות לענן</button>
+<div id="app-screen" class="container hidden">
+    <h1>ניהול טיפול</h1>
+    <h3>בחר מטפל ומטופל כדי להתחיל:</h3>
+    <div id="active-caregivers" class="tags-container"></div>
+    <div id="active-patients" class="tags-container"></div>
+    <button class="main-btn" onclick="alert('טיפול התחיל!')">התחל טיפול</button>
 </div>
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw0WQGdoyvAJoCH9CW2dZW5fiwQfITGauyOOu6Kacwc3JPuKeGtOjXL45htMtXjTE90gg/exec";
-    
-    // רשימות המטפלים והמטופלים
-    let caregivers = [];
-    let patients = [];
+    let caregivers = [], patients = [];
 
-    // פונקציה להוספת בלון
     function addTag(type) {
         let input = document.getElementById('in-' + type);
         if(input.value) {
             type === 'caregiver' ? caregivers.push(input.value) : patients.push(input.value);
-            render();
+            renderSettings();
             input.value = '';
         }
     }
 
-    // ציור הבלונים על המסך
-    function render() {
+    function renderSettings() {
         document.getElementById('caregiver-tags').innerHTML = caregivers.map((c, i) => `<span class="tag" onclick="remove('c', ${i})">${c} ✕</span>`).join('');
         document.getElementById('patient-tags').innerHTML = patients.map((p, i) => `<span class="tag" onclick="remove('p', ${i})">${p} ✕</span>`).join('');
     }
 
     function remove(type, i) {
         type === 'c' ? caregivers.splice(i, 1) : patients.splice(i, 1);
-        render();
+        renderSettings();
     }
 
-    // שמירה לענן (השדרוג)
-    function saveToCloud() {
+    function saveAndStart() {
+        // שמירה לענן
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ type: 'settings', caregivers, patients })
-        }).then(() => alert("השמות נשמרו בענן!"));
+        }).then(() => {
+            // מעבר למסך עבודה
+            document.getElementById('settings-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            
+            // הצגת השמות שבחרת ככפתורים במסך הבא
+            document.getElementById('active-caregivers').innerHTML = caregivers.map(c => `<span class="tag">${c}</span>`).join('');
+            document.getElementById('active-patients').innerHTML = patients.map(p => `<span class="tag">${p}</span>`).join('');
+        });
     }
 </script>
 </body>
